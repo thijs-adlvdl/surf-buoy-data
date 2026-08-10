@@ -12,18 +12,24 @@ const BUOYS = [
   // e.g. Zeeland or the Wadden coast — same shape: {code, name, lat, lon}.
 ];
 
-const ENDPOINT = 'https://waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES_DBO/OphalenLaatsteWaarnemingen';
+// NOTE: Rijkswaterstaat retired the classic WaterWebservices host at the
+// end of April 2026, replacing it with this one. Same underlying data,
+// slightly different request shape (batched location/metadata lists
+// instead of a single object each). Response JSON shape is unchanged.
+const ENDPOINT = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen';
 
 async function fetchBuoy(buoy) {
   const body = {
-    AquoPlusWaarnemingMetadata: {
-      AquoMetadata: {
-        Compartiment: { Code: 'OW' },
-        Eenheid: { Code: 'cm' },
-        Grootheid: { Code: 'Hm0' },
+    LocatieLijst: [{ Code: buoy.code }],
+    AquoPlusWaarnemingMetadataLijst: [
+      {
+        AquoMetadata: {
+          Compartiment: { Code: 'OW' },
+          Eenheid: { Code: 'cm' },
+          Grootheid: { Code: 'Hm0' },
+        },
       },
-    },
-    Locatie: { Code: buoy.code },
+    ],
   };
 
   const res = await fetch(ENDPOINT, {
@@ -32,16 +38,23 @@ async function fetchBuoy(buoy) {
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${buoy.code}`);
-  const data = await res.json();
+  const rawText = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${buoy.code}: ${rawText.slice(0, 300)}`);
+
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    throw new Error(`Non-JSON response for ${buoy.code}: ${rawText.slice(0, 300)}`);
+  }
 
   const list = data.WaarnemingenLijst;
-  if (!list || !list.length) throw new Error(`No WaarnemingenLijst for ${buoy.code}`);
+  if (!list || !list.length) throw new Error(`No WaarnemingenLijst for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
   const metingen = list[0].MetingenLijst;
-  if (!metingen || !metingen.length) throw new Error(`No MetingenLijst for ${buoy.code}`);
+  if (!metingen || !metingen.length) throw new Error(`No MetingenLijst for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
   const latest = metingen[metingen.length - 1];
   const cm = latest.Meetwaarde && latest.Meetwaarde.Waarde_Numeriek;
-  if (cm == null || Number.isNaN(cm)) throw new Error(`No numeric value for ${buoy.code}`);
+  if (cm == null || Number.isNaN(cm)) throw new Error(`No numeric value for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
 
   return {
     code: buoy.code,
