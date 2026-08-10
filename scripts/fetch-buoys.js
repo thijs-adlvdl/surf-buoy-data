@@ -48,29 +48,31 @@ async function postJson(url, body) {
 }
 
 // Ask Rijkswaterstaat's own catalog for every location whose name
-// contains one of our search terms, and log every match with its real
-// Code — this is how we find the correct codes instead of guessing.
-async function findLocationCodes() {
+// contains one of our search terms, and log every match — this is how
+// we find candidate codes instead of guessing. Returns up to a handful
+// of candidates per term, in catalog order.
+async function findLocationCandidates() {
   const data = await postJson(CATALOG_ENDPOINT, {
     CatalogusFilter: { Locaties: true },
   });
   const locations = data.LocatieLijst || [];
   console.log(`Catalog returned ${locations.length} total locations.`);
 
-  const found = {};
+  const candidates = {};
   for (const term of SEARCH_TERMS) {
     const matches = locations.filter(
       (loc) => loc.Naam && loc.Naam.toLowerCase().includes(term.key)
     );
     if (matches.length) {
       console.log(`Matches for "${term.key}":`);
-      matches.forEach((m) => console.log(`   Code=${m.Code}  Naam="${m.Naam}"  X=${m.X} Y=${m.Y}`));
-      found[term.key] = matches[0].Code; // take the first match
+      matches.forEach((m) => console.log(`   Code=${m.Code}  Naam="${m.Naam}"`));
+      candidates[term.key] = matches.slice(0, 8).map((m) => m.Code);
     } else {
       console.warn(`No catalog matches for "${term.key}"`);
+      candidates[term.key] = [];
     }
   }
-  return found;
+  return candidates;
 }
 
 async function fetchBuoy(term, code) {
@@ -108,26 +110,32 @@ async function fetchBuoy(term, code) {
 async function main() {
   const results = [];
 
-  let codes = {};
+  let candidates = {};
   try {
-    codes = await findLocationCodes();
+    candidates = await findLocationCandidates();
   } catch (err) {
     console.error(`Catalog lookup failed: ${err.message}`);
   }
 
   for (const term of SEARCH_TERMS) {
-    const code = codes[term.key];
-    if (!code) {
-      console.warn(`FAIL ${term.key}: no catalog code found, skipping`);
+    const codes = candidates[term.key] || [];
+    if (!codes.length) {
+      console.warn(`FAIL ${term.key}: no catalog candidates found, skipping`);
       continue;
     }
-    try {
-      const reading = await fetchBuoy(term, code);
-      results.push(reading);
-      console.log(`OK   ${term.key} (${code}): Hm0=${reading.hm0}m @ ${reading.time}`);
-    } catch (err) {
-      console.warn(`FAIL ${term.key} (${code}): ${err.message}`);
+    let success = false;
+    for (const code of codes) {
+      try {
+        const reading = await fetchBuoy(term, code);
+        results.push(reading);
+        console.log(`OK   ${term.key} -> ${code}: Hm0=${reading.hm0}m @ ${reading.time}`);
+        success = true;
+        break; // first candidate with real Hm0 data wins
+      } catch (err) {
+        console.log(`   tried ${code}: ${err.message}`);
+      }
     }
+    if (!success) console.warn(`FAIL ${term.key}: none of ${codes.length} candidates had usable Hm0 data`);
   }
 
   const out = {
