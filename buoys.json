@@ -1,35 +1,4 @@
-name: Update buoy data
-
-on:
-  schedule:
-    - cron: '0 * * * *'   # every hour, on the hour
-  workflow_dispatch: {}    # adds a "Run workflow" button for manual testing
-
-permissions:
-  contents: write
-
-concurrency:
-  group: update-buoys
-  cancel-in-progress: false
-
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Fetch buoy readings
-        run: node scripts/fetch-buoys.js
-
-      - name: Commit and push if changed
-        run: |
-          git config user.name "buoy-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add buoys.json
-          git diff --cached --quiet || git commit -m "Update buoy data"
-          git pull --rebase origin main
-          git push
+{
+  "generatedAt": "2026-08-10T18:21:49.188Z",
+  "buoys": []
+}
