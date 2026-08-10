@@ -66,7 +66,7 @@ async function findLocationCandidates() {
     if (matches.length) {
       console.log(`Matches for "${term.key}":`);
       matches.forEach((m) => console.log(`   Code=${m.Code}  Naam="${m.Naam}"`));
-      candidates[term.key] = matches.slice(0, 8).map((m) => m.Code);
+      candidates[term.key] = matches.slice(0, 30).map((m) => m.Code);
     } else {
       console.warn(`No catalog matches for "${term.key}"`);
       candidates[term.key] = [];
@@ -96,6 +96,11 @@ async function fetchBuoy(term, code) {
   const latest = metingen[metingen.length - 1];
   const cm = latest.Meetwaarde && latest.Meetwaarde.Waarde_Numeriek;
   if (cm == null || Number.isNaN(cm)) throw new Error(`No numeric Hm0 value for ${code}`);
+
+  const ageHours = (Date.now() - new Date(latest.Tijdstip).getTime()) / 3600000;
+  if (!(ageHours >= 0) || ageHours > 6) {
+    throw new Error(`Stale reading for ${code}: ${latest.Tijdstip} (${ageHours.toFixed(1)}h old)`);
+  }
 
   return {
     code,
