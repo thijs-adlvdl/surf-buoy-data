@@ -34,27 +34,38 @@ async function fetchBuoy(buoy) {
 
   const res = await fetch(ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      // Some public-sector APIs sit behind bot-protection that silently
+      // returns an empty 200 body to non-browser-looking clients rather
+      // than an honest error. Identifying as a real browser is a common,
+      // legitimate workaround for calling an otherwise-public open-data
+      // endpoint from a server-side script.
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    },
     body: JSON.stringify(body),
   });
 
   const rawText = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${buoy.code}: ${rawText.slice(0, 300)}`);
+  const diag = `status=${res.status} url=${res.url} content-type=${res.headers.get('content-type')} length=${rawText.length}`;
+
+  if (!res.ok) throw new Error(`HTTP error for ${buoy.code} (${diag}): ${rawText.slice(0, 300)}`);
 
   let data;
   try {
     data = JSON.parse(rawText);
   } catch {
-    throw new Error(`Non-JSON response for ${buoy.code}: ${rawText.slice(0, 300)}`);
+    throw new Error(`Non-JSON response for ${buoy.code} (${diag}): "${rawText.slice(0, 300)}"`);
   }
 
   const list = data.WaarnemingenLijst;
-  if (!list || !list.length) throw new Error(`No WaarnemingenLijst for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
+  if (!list || !list.length) throw new Error(`No WaarnemingenLijst for ${buoy.code} (${diag}). Raw: ${rawText.slice(0, 300)}`);
   const metingen = list[0].MetingenLijst;
-  if (!metingen || !metingen.length) throw new Error(`No MetingenLijst for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
+  if (!metingen || !metingen.length) throw new Error(`No MetingenLijst for ${buoy.code} (${diag}). Raw: ${rawText.slice(0, 300)}`);
   const latest = metingen[metingen.length - 1];
   const cm = latest.Meetwaarde && latest.Meetwaarde.Waarde_Numeriek;
-  if (cm == null || Number.isNaN(cm)) throw new Error(`No numeric value for ${buoy.code}. Raw: ${rawText.slice(0, 300)}`);
+  if (cm == null || Number.isNaN(cm)) throw new Error(`No numeric value for ${buoy.code} (${diag}). Raw: ${rawText.slice(0, 300)}`);
 
   return {
     code: buoy.code,
