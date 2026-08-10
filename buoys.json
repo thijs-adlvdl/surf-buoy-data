@@ -1,4 +1,13 @@
 {
-  "generatedAt": "2026-08-10T20:08:54.084Z",
-  "buoys": []
+  "generatedAt": "2026-08-10T20:25:53.055Z",
+  "buoys": [
+    {
+      "code": "europlatform",
+      "name": "Europlatform",
+      "lat": 51.999,
+      "lon": 3.276,
+      "hm0": 0.88,
+      "time": "2026-08-10T20:50:00.000+01:00"
+    }
+  ]
 }
