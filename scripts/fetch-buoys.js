@@ -20,9 +20,9 @@ const SEARCH_TERMS = [
   // there once you know what's actually available.
 ];
 
-const BASE = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES';
-const CATALOG_ENDPOINT = `${BASE}/OphalenCatalogus`;
-const LATEST_ENDPOINT = `${BASE}/OphalenLaatsteWaarnemingen`;
+const BASE = 'https://ddapi20-waterwebservices.rijkswaterstaat.nl';
+const CATALOG_ENDPOINT = `${BASE}/METADATASERVICES/OphalenCatalogus`;
+const LATEST_ENDPOINT = `${BASE}/ONLINEWAARNEMINGENSERVICES/OphalenLaatsteWaarnemingen`;
 
 const HEADERS = {
   'Content-Type': 'application/json',
