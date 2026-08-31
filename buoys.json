@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-31T14:01:00.473Z",
+  "generatedAt": "2026-08-31T15:01:01.823Z",
   "buoys": [
     {
       "code": "europlatform",
       "name": "Europlatform",
       "lat": 51.999,
       "lon": 3.276,
-      "hm0": 1.82,
-      "time": "2026-08-31T14:40:00.000+01:00"
+      "hm0": 1.75,
+      "time": "2026-08-31T15:30:00.000+01:00"
     },
     {
       "code": "ijmuiden.munitiestort.1",
