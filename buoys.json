@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-09-08T15:02:39.095Z",
+  "generatedAt": "2026-09-08T16:01:20.316Z",
   "buoys": [
     {
       "code": "europlatform",
       "name": "Europlatform",
       "lat": 51.999,
       "lon": 3.276,
-      "hm0": 0.86,
-      "time": "2026-09-08T15:30:00.000+01:00"
+      "hm0": 0.77,
+      "time": "2026-09-08T16:30:00.000+01:00"
     },
     {
       "code": "ijmuiden.munitiestort.2",
       "name": "IJmuiden (munitiestort / buitenhaven)",
       "lat": 52.86,
       "lon": 4.01,
-      "hm0": 1.2,
-      "time": "2026-09-08T15:30:00.000+01:00"
+      "hm0": 1.08,
+      "time": "2026-09-08T16:40:00.000+01:00"
     }
   ]
 }
